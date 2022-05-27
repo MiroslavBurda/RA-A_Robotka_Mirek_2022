@@ -1,150 +1,110 @@
 #include "robotka.h"
 #include <thread>
-#include <atomic>
 
-#define DELAY 50
-#define DELAY_BLINK 250
-#define LED_COUNT 8
+unsigned long startTime = 0; // zacatek programu 
+bool red = true;
+byte readData[10]= { 1 }; //The character array is used as buffer to read into.
 
-unsigned long last_millis = 0;
-bool rotating = false; // otáčí se?
-bool finding = false; // našel kostku
-bool previousLeft = false;
-bool justPressed = true; //je tlačítko stisknuto poprvé
-int ledBlink = 10; // blikani zadanou LED, 10 vypne všechny LED
-int UltraUp = 5000, UltraDown = 5000, Min;
-int found = 0; // kolik kostek našel
-int l = 0; // hodnta leveho ultrazvuku
-int r = 0; // hodnota praveho ultrazvuku
-int IrL[] = { 0, 0, 0, 0 }; // pole pro levy infrazvuk
-int IrR[] = { 0, 0, 0, 0 }; // pole pro pravy infrazvuk
-int k = 0; // pocitadlo pro IR
-
-std::atomic<int32_t> motor_value;
-
-std::function<void(rb::Motor&)> m_cb = [&](rb::Motor& motor){
-    motor_value.store(motor.position());
-};
-
-
-void SmartLedsOff() {
-    for (int i = 0; i != LED_COUNT; i++)
-        rkSmartLedsRGB(i, 0, 0, 0);
-}
-
-void rkIr() { // prumerovani IR
+void ultrasonic() {
     while (true) {
-        k++;
-        if (k == 30000)
-            k = 0;
-        switch (k % 4) {
-        case 0:
-            IrL[0] = rkIrLeft();
-            IrR[0] = rkIrRight();
-            break;
-        case 1:
-            IrL[1] = rkIrLeft();
-            IrR[1] = rkIrRight();
-            break;
-        case 2:
-            IrL[2] = rkIrLeft();
-            IrR[2] = rkIrRight();
-            break;
-        case 3:
-            IrL[3] = rkIrLeft();
-            IrR[3] = rkIrRight();
-            break;
-        default:
-            printf("Chyba v prikazu switch");
-            break;
-        }
-        l = (IrL[0] + IrL[1] + IrL[2] + IrL[3]) / 4;
-        r = (IrR[0] + IrR[1] + IrR[2] + IrR[3]) / 4;
-        delay(10);
+        if (Serial1.available() > 0) { 
+            int x = Serial1.readBytes(readData, 10); //It require two things, variable name to read into, number of bytes to read.
+            printf("bytes: "); 
+            // Serial.println(x); //display number of character received in readData variable.
+            printf("h: %i, ", readData[0]);
+            printf("h: %i, ", readData[1]);
+            for(int i = 2; i<10; i++) {
+                printf("%i: %i, ", i-2, readData[i]); // ****************
+            }
+            printf("\n ");
+        } 
+        delay(10);            
     }
 }
 
-void Print() {
-    
-    printf("L: %f   R: %f  UltraUp: %i  Ultradown: %i \n", rkMotorsGetPositionLeft(), rkMotorsGetPositionRight(), UltraUp, UltraDown);
-    // SerialBT.print("L: ");
-    // SerialBT.print(l);
-    // SerialBT.print("  R: ");
-    // SerialBT.print(r);
-    // SerialBT.print("  UltraUP: ");
-    // SerialBT.print(UltraUp);
-    // SerialBT.print("  UltraDown: ");
-    // SerialBT.print(UltraDown);
-    // SerialBT.print("  Min: ");
-    // SerialBT.println(Min);
-    last_millis = millis();
+
+void stopTime() { // STOP jizde po x milisec 
+    while(true) {
+        if (( millis() - startTime ) > 30000000) { // konci cca o 700ms driv real: 127000
+            printf("cas vyprsel: ");
+            printf("%lu, %lu \n", startTime, millis() );
+            rkSmartLedsRGB(0, 255, 0, 0);
+            delay(100); // aby stihla LED z predchoziho radku rozsvitit - z experimentu
+            abort(); // program skonci -> dojde k resetu a zustane cekat pred stiskem tlacitka Up
+        }
+        delay(10); 
+    }
 }
 
 void setup() {
     
-    rkConfig cfg;
-    cfg.owner = "mirek"; // Ujistěte se, že v aplikace RBController máte nastavené stejné
-    cfg.name = "mojerobotka";
-    cfg.motor_max_power_pct = 100; // limit výkonu motorů na xx %
+    Serial1.begin(115200, SERIAL_8N1, 17, 16); // Rx = 17 Tx = 16   
 
+    rkConfig cfg;
+    cfg.motor_max_power_pct = 100; // limit výkonu motorů na xx %
     cfg.motor_enable_failsafe = false;
     cfg.rbcontroller_app_enable = false; // nepoužívám mobilní aplikaci (lze ji vypnout - kód se zrychlí, ale nelze ji odstranit z kódu -> kód se nezmenší)
+    cfg.motor_polarity_switch_left = true;
+    cfg.motor_polarity_switch_right = false;
     rkSetup(cfg);
 
-    rkUltraMeasureAsync(1, [&](uint32_t distance_mm) -> bool { // nesmí být v hlavním cyklu, protože se je napsaná tak, že se cyklí pomocí return true
-        UltraUp = distance_mm;
-        return true;
-    });
+    rkLedBlue(true); // cekani na stisk Up, take po resetu stop tlacitkem, aby se zase hned nerozjela
+    printf("cekani na stisk Up\n");
+    while(true) {   
+        if(rkButtonUp(true)) {
+            break;
+        }
+        delay(10);
+    }
+    rkLedBlue(false);
 
-    rkUltraMeasureAsync(2, [&](uint32_t distance_mm) -> bool {
-        UltraDown = distance_mm;
-        return true;
-    });
+    startTime = millis();   
 
-    // std::thread t1(blink); // zajistí blikání v samostatném vlákně
-    // std::thread t2(rkIr); // prumerne hodnoty z IR
+    std::thread t2(ultrasonic);
+    std::thread t3(stopTime); // vlakno pro zastaveni po uplynuti casu 
 
-    delay(300);
     fmt::print("{}'s Robotka '{}' with {} mV started!\n", cfg.owner, cfg.name, rkBatteryVoltageMv());
     rkLedYellow(true); // robot je připraven
-
-    while (true) {
-
-        if (rkButtonUp(true)) {
-            rkMotorsDriveAsync(1000, 1000, 100, [](void) {});
-            delay(300);
-        }
-
-        if (rkButtonLeft(true)) {
-            rkMotorsSetSpeed(100, 100);
-            delay(300);
-        }
-
-        if (rkButtonRight(true)) {
-            rkMotorsSetSpeed(0, 0);
-            delay(300);
-        }
-
-        if (rkButtonDown(true)) { // Tlačítko dolů: otáčej se a hledej kostku
-            if (justPressed) {
-                justPressed = false; // kdyz by tu tato podminka nebyla, byla by pauza v kazdem cyklu
-                delay(300); // prodleva, abyste stihli uhnout rukou z tlačítka
-            }
-            if (rotating) {
-                rkMotorsSetPower(0, 0); // zastavit robota
-                rotating = false;
-                rkLedBlue(false);
-            } else {
-                rotating = true;
-                rkLedBlue(true);
-            }
-        }
-
-        Min = (UltraUp < UltraDown) ? UltraUp : UltraDown;
-        if (millis() - last_millis > 500)
-            Print();
-        //    printf("l: %i  r: %i  UA: %i  UD: %i  Up: %i  Down: %i \n", l, r, rkIrLeft(), rkIrRight(), UltraUp, UltraDown);
-
-
+    if(red) {  
+        rkLedRed(true);
+        rkLedBlue(false);
     }
+    else {
+        rkLedRed(false);
+        rkLedBlue(true);               
+    }
+
+    printf("vyber strany - tlacitkko Down\n");
+    while(true) {   
+        if(!rkButtonLeft(false)) { // vytazeni startovaciho lanka na tl. Left rozjede robota  
+            break;
+        }
+        if(rkButtonDown(true)) {
+            red = !red;
+            if(red) {
+                rkLedRed(true);
+                rkLedBlue(false);
+            }
+            else {
+                rkLedRed(false);
+                rkLedBlue(true);               
+            }
+        }
+        delay(10);
+    }
+// jizda vpred - predek je tam, kde je radlice 
+
+    if(red) {   // startuje na cervene barve
+                rkMotorsSetSpeed(0, 50);
+                delay(1000);
+                rkMotorsSetSpeed(0, 0);
+    }
+    else { //startuje na modre barve
+                rkMotorsSetSpeed(50, 0);
+                delay(1000);  
+                rkMotorsSetSpeed(0, 0);          
+    }
+
+    while(true)     // po dokončení jízdy si v klidu odpočívá 
+        delay(10); 
 }
