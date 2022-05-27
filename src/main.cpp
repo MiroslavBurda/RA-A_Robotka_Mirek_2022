@@ -46,8 +46,8 @@ void setup() {
     cfg.motor_max_power_pct = 100; // limit výkonu motorů na xx %
     cfg.motor_enable_failsafe = false;
     cfg.rbcontroller_app_enable = false; // nepoužívám mobilní aplikaci (lze ji vypnout - kód se zrychlí, ale nelze ji odstranit z kódu -> kód se nezmenší)
-    cfg.motor_polarity_switch_left = true;
-    cfg.motor_polarity_switch_right = false;
+    //cfg.motor_polarity_switch_left = true;
+    //cfg.motor_polarity_switch_right = false;
     cfg.motor_wheel_diameter = 69;
     cfg.motor_id_left = 4;
     cfg.motor_id_right = 1;
