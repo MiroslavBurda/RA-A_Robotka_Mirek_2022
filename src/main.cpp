@@ -134,7 +134,7 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
     rkMotorsSetPositionRight();
 
     while ( abs(distEncReduced) > abs(rkMotorsGetPositionLeft()) ) {
-        printf("dist: %i, pos: %i", distEncReduced, rkMotorsGetPositionLeft() );
+        printf("dist: %f, pos: %f\n", distEncReduced, rkMotorsGetPositionLeft() );
         actualL = rkMotorsGetPositionLeft();
         actualR = rkMotorsGetPositionRight();
         actualRD = actualL * 0.99013;
