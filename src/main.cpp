@@ -25,12 +25,13 @@ void ultrasonic() {
 
 void stopTime() { // STOP jizde po x milisec 
     while(true) {
-        if (( millis() - startTime ) > 30000000) { // konci cca o 700ms driv real: 127000
+        if (( millis() - startTime ) > 3000) { // konci cca o 700ms driv real: 127000
             printf("cas vyprsel: ");
             printf("%lu, %lu \n", startTime, millis() );
             rkSmartLedsRGB(0, 255, 0, 0);
+            rkMotorsSetSpeed(0, 0);
             delay(100); // aby stihla LED z predchoziho radku rozsvitit - z experimentu
-            abort(); // program skonci -> dojde k resetu a zustane cekat pred stiskem tlacitka Up
+            //abort(); // program skonci -> dojde k resetu a zustane cekat pred stiskem tlacitka Up
         }
         delay(10); 
     }
@@ -120,8 +121,8 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
     
     // int lastL = 0;
     // int lastR = 0;
-    int actualL = 0;
-    int actualR = 0;
+    float actualL = 0;
+    float actualR = 0;
     float actualRD =0; // chtena hodnota na pravem enkoderu
     float corr = 0; // korekce rychlosti
     float const maxCorr = 5; // maximalni korekce rychlosti
@@ -133,26 +134,28 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
     rkMotorsSetPositionLeft();
     rkMotorsSetPositionRight();
 
-    while ( abs(distEncReduced) > abs(rkMotorsGetPositionLeft()) ) {
-        printf("dist: %f, pos: %f\n", distEncReduced, rkMotorsGetPositionLeft() );
-        actualL = rkMotorsGetPositionLeft();
-        actualR = rkMotorsGetPositionRight();
-        actualRD = actualL * 0.99013;
-        err = actualRD - actualR;
-        corr = PP*err;
-        corr = round(corr);
-        if (corr > maxCorr) corr = maxCorr;  // zabraneni prilis velke korekce rychlosti
-            if (corr < -maxCorr) corr = -maxCorr;
-        if (corr >0) {
-            rkMotorsSetSpeed(speed, speed - corr);
-        }
-        else {
-            rkMotorsSetSpeed(speed + corr, speed);
-        }
-        // writeDebugStreamLine("jizda: time1: %i vL: %i vR: %i EncL: %i EncR: %i EncRD: %4.2f err: %4.2f corr: %4.2f", time1[T1], actualL - lastL, actualR - lastR, actualL , actualR, actualRD, err, corr );
-        // lastL = rkMotorsGetPositionLeft();
-        // lastR = rkMotorsGetPositionRight();
-        delay(100);
-    }
+    rkMotorsDriveAsync(40, 40, 20);
+
+    // while ( abs(distEncReduced) > abs(actualL) ) {
+    //     printf("dist: %f, pos: %f\n", distEncReduced, actualL );
+    //     actualL = rkMotorsGetPositionLeft();
+    //     actualR = rkMotorsGetPositionRight();
+    //     actualRD = actualL * 0.99013;
+    //     err = actualRD - actualR;
+    //     corr = PP*err;
+    //     corr = round(corr);
+    //     if (corr > maxCorr) corr = maxCorr;  // zabraneni prilis velke korekce rychlosti
+    //         if (corr < -maxCorr) corr = -maxCorr;
+    //     if (corr >0) {
+    //         rkMotorsSetSpeed(speed, speed - corr);
+    //     }
+    //     else {
+    //         rkMotorsSetSpeed(speed + corr, speed);
+    //     }
+    //     // writeDebugStreamLine("jizda: time1: %i vL: %i vR: %i EncL: %i EncR: %i EncRD: %4.2f err: %4.2f corr: %4.2f", time1[T1], actualL - lastL, actualR - lastR, actualL , actualR, actualRD, err, corr );
+    //     // lastL = rkMotorsGetPositionLeft();
+    //     // lastR = rkMotorsGetPositionRight();
+    //     delay(100);
+    // }
 }
 
