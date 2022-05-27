@@ -65,7 +65,7 @@ void setup() {
 
     startTime = millis();   
 
-    std::thread t2(ultrasonic);
+    // std::thread t2(ultrasonic);
     std::thread t3(stopTime); // vlakno pro zastaveni po uplynuti casu 
 
     fmt::print("{}'s Robotka '{}' with {} mV started!\n", cfg.owner, cfg.name, rkBatteryVoltageMv());
@@ -99,18 +99,18 @@ void setup() {
     }
 // jizda vpred - predek je tam, kde je radlice 
 
-    if(red) {   // startuje na cervene barve
-                rkMotorsSetSpeed(50, 50);
-                delay(1000);
-                rkMotorsSetSpeed(0, 0);
-    }
-    else { //startuje na modre barve
-                rkMotorsSetSpeed(30, 30);
-                delay(1000);  
-                rkMotorsSetSpeed(0, 0);          
-    }
+    // if(red) {   // startuje na cervene barve
+    //             rkMotorsSetSpeed(50, 50);
+    //             delay(1000);
+    //             rkMotorsSetSpeed(0, 0);
+    // }
+    // else { //startuje na modre barve
+    //             rkMotorsSetSpeed(30, 30);
+    //             delay(1000);  
+    //             rkMotorsSetSpeed(0, 0);          
+    // }
 
-  //  forward(500,30);
+   forward(300,20);
 
     while(true)     // po dokončení jízdy si v klidu odpočívá 
         delay(10); 
@@ -134,6 +134,7 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
     rkMotorsSetPositionRight();
 
     while ( abs(distEncReduced) > abs(rkMotorsGetPositionLeft()) ) {
+        printf("dist: %i, pos: %i", distEncReduced, rkMotorsGetPositionLeft() );
         actualL = rkMotorsGetPositionLeft();
         actualR = rkMotorsGetPositionRight();
         actualRD = actualL * 0.99013;
@@ -151,7 +152,7 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
         // writeDebugStreamLine("jizda: time1: %i vL: %i vR: %i EncL: %i EncR: %i EncRD: %4.2f err: %4.2f corr: %4.2f", time1[T1], actualL - lastL, actualR - lastR, actualL , actualR, actualRD, err, corr );
         // lastL = rkMotorsGetPositionLeft();
         // lastR = rkMotorsGetPositionRight();
-        delay(10);
+        delay(100);
     }
 }
 
