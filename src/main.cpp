@@ -120,57 +120,57 @@ void setup() {
    while(true){  // hlavni smycka 
         if(state == 1) {
             state = 2;
-            rkMotorsDriveAsync(350, 350, 50, [&](){printf("ze startu\n"); state = 3;});
+            rkMotorsDriveAsync(350, 350, speed, [&](){printf("ze startu\n"); state = 3;});
         }
         if(state == 3) {
             state = 4;
             if (red){
-                rkMotorsDriveAsync(130, -130, 20, [&](){printf("zatocil k nakladaku\n"); state = 5;});
+                rkMotorsDriveAsync(130, -130, speedSlow, [&](){printf("zatocil k nakladaku\n"); state = 5;});
             }
             else {
-                rkMotorsDriveAsync(-130, 130, 20, [&](){printf("zatocil k nakladaku\n"); state = 5;});
+                rkMotorsDriveAsync(-130, 130, speedSlow, [&](){printf("zatocil k nakladaku\n"); state = 5;});
                 delay(500);
             }
         }
         if(state == 5) {
             state = 6;
-            rkMotorsDriveAsync(990, 990, 50, [&](){printf("vytlacil\n"); state = 7;}); // ************ bez couvani - state 9 
+            rkMotorsDriveAsync(1010, 1010, speed, [&](){printf("vytlacil\n"); state = 7;}); // ************ bez couvani - state 9 
         }
 
         if(state == 7) { // ************ couvani - nebezpecne bez ultrazvuku 
             state = 8;
-            rkMotorsDriveAsync(-50, -50, 20, [&](){printf("couvl\n"); state = 9;});
+            rkMotorsDriveAsync(-50, -50, speedSlow, [&](){printf("couvl\n"); state = 9;});
         }
 
         if(state == 9) { 
             state = 10;
             if (red){
-                rkMotorsDriveAsync(260, -260, 20, [&](){printf("otocil se zpet\n"); state = 11;});
+                rkMotorsDriveAsync(260, -260, speedSlow, [&](){printf("otocil se zpet\n"); state = 11;});
             }
             else {
-                rkMotorsDriveAsync(-260, 260, 20, [&](){printf("otocil se zpet\n"); state = 11;});
+                rkMotorsDriveAsync(-260, 260, speedSlow, [&](){printf("otocil se zpet\n"); state = 11;});
                 delay(500);
             }
         }
 
         if(state == 11) {
             state = 12;
-            rkMotorsDriveAsync(1100, 1100, 50, [&](){printf("vraci se zpet\n"); state = 13;});
+            rkMotorsDriveAsync(1120, 1120, speed, [&](){printf("vraci se zpet\n"); state = 13;});
         }
 
         if(state == 13) { 
             state = 14;
             if (red){
-                rkMotorsDriveAsync(-140, 140, 20, [&](){printf("otocil se na start\n"); state = 15;});
+                rkMotorsDriveAsync(-140, 140, speedSlow, [&](){printf("otocil se na start\n"); state = 15;});
             }
             else {
-                rkMotorsDriveAsync(140, -140, 20, [&](){printf("otocil se na start\n"); state = 15;});
+                rkMotorsDriveAsync(140, -140, speedSlow, [&](){printf("otocil se na start\n"); state = 15;});
                 delay(500);
             }
         }
         if(state == 15) {
             state = 16;
-            rkMotorsDriveAsync(650, 650, 50, [&](){printf("zpet na start\n"); state = 17;});
+            rkMotorsDriveAsync(650, 650, speed, [&](){printf("zpet na start\n"); state = 17;});
         }
 
         delay(10); 
