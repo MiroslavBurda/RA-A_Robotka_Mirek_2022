@@ -25,13 +25,24 @@ void ultrasonic() {
 
 void stopTime() { // STOP jizde po x milisec 
     while(true) {
-        if (( millis() - startTime ) > 3000) { // konci cca o 700ms driv real: 127000
+        if (( millis() - startTime ) > 127000) { // konci cca o 700ms driv real: 127000
             printf("cas vyprsel: ");
             printf("%lu, %lu \n", startTime, millis() );
-            rkSmartLedsRGB(0, 255, 0, 0);
             rkMotorsSetSpeed(0, 0);
+            //rkSmartLedsRGB(0, 255, 0, 0);
             delay(100); // aby stihla LED z predchoziho radku rozsvitit - z experimentu
-            //abort(); // program skonci -> dojde k resetu a zustane cekat pred stiskem tlacitka Up
+            //rkSmartLedsRGB(0, 255, 0, 0)
+            for(int i = 0; i<5; i++)  { // zaverecne zablikani vsemi LED 
+                for(int i = 0; i<5; i++) {
+                    rkLedById(i, true);
+                }
+                delay(500);
+                for(int i = 0; i<5; i++) {
+                    rkLedById(i, false);
+                }
+                delay(500);
+            }
+            abort(); // program skonci -> dojde k resetu a zustane cekat pred stiskem tlacitka Up
         }
         delay(10); 
     }
@@ -49,7 +60,7 @@ void setup() {
     cfg.rbcontroller_app_enable = false; // nepoužívám mobilní aplikaci (lze ji vypnout - kód se zrychlí, ale nelze ji odstranit z kódu -> kód se nezmenší)
     //cfg.motor_polarity_switch_left = true;
     //cfg.motor_polarity_switch_right = false;
-    cfg.motor_wheel_diameter = 69;
+    cfg.motor_wheel_diameter = 66;
     cfg.motor_id_left = 4;
     cfg.motor_id_right = 1;
     rkSetup(cfg);
@@ -80,7 +91,7 @@ void setup() {
         rkLedBlue(true);               
     }
 
-    printf("vyber strany - tlacitkko Down\n");
+    printf("vyber strany - tlacitko Down\n");
     while(true) {   
         if(!rkButtonLeft(false)) { // vytazeni startovaciho lanka na tl. Left rozjede robota  
             break;
@@ -131,10 +142,13 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
     //float distEnc = distance / 0.4256; // z experimentu; vzdalenot v ticich enkoderu teoreticky vychazi 0.4375
     float distEncReduced = distance;
     
-    rkMotorsSetPositionLeft();
+    rkMotorsSetPositionLeft(); // reset enkoderu 
     rkMotorsSetPositionRight();
 
-    rkMotorsDriveAsync(40, 40, 20);
+    rkMotorsDriveAsync(600, 600, 50);
+    delay(10000);
+    printf("L: %f, R: %f\n", rkMotorsGetPositionLeft(), rkMotorsGetPositionRight() );
+
 
     // while ( abs(distEncReduced) > abs(actualL) ) {
     //     printf("dist: %f, pos: %f\n", distEncReduced, actualL );
@@ -157,5 +171,11 @@ void forward(float distance, int speed) {  // vzdalenost v mm 0 .. 32000, rychlo
     //     // lastR = rkMotorsGetPositionRight();
     //     delay(100);
     // }
+
+    while(true) {
+        delay(10);
+    }
+
+
 }
 
