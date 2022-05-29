@@ -11,6 +11,25 @@ byte state = 1; // stav programu
 byte speed = 50; // obvykla rychlost robota
 byte speedSlow = 20; // pomala = zataceci rychlost robota  
 
+/**
+ * @brief Funkce na vyhledání nejmenší hodnoty z byte pole. !!! Nulu to nebere jako nejmenší !!!
+ * 
+ * @param arr   Ukazatel na pole hodnot
+ * @param index Adresa kam má funkce vrátit pozici nejmenší hodnoty
+ * @return byte Vrací nejmenší hodnotu pole 
+ */
+byte min_arr(byte *arr, int index){
+    byte tmp = 255;
+    index = -1;
+    for (size_t i = 0; i < (sizeof(arr)/sizeof(*arr)); i++) {
+        if (arr[i] < tmp && arr[i] != 0) {
+            tmp = arr[i];
+            index = i;
+        }
+    }
+    return tmp;
+}
+
 void ultrasonic() {
     while (true) {
         if (Serial1.available() > 0) { 
