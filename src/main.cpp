@@ -6,7 +6,10 @@
 
 unsigned long startTime = 0; // zacatek programu 
 bool red = true;
-byte readData[10]= { 1 }; //The character array is used as buffer to read into.
+const byte readSize = 10;
+byte readData1[readSize]= {0}; //The character array is used as buffer to read into.
+byte readData2[readSize]= {0};
+byte readData3[readSize]= {0};
 byte state = 1; // stav programu
 byte speed = 50; // obvykla rychlost robota
 byte speedSlow = 20; // pomala = zataceci rychlost robota  
@@ -18,10 +21,10 @@ byte speedSlow = 20; // pomala = zataceci rychlost robota
  * @param index Adresa kam má funkce vrátit pozici nejmenší hodnoty
  * @return byte Vrací nejmenší hodnotu pole 
  */
-byte min_arr(byte *arr, int index){
+byte min_arr(byte *arr, int &index){
     byte tmp = 255;
     index = -1;
-    for (size_t i = 0; i < (sizeof(arr)/sizeof(*arr)); i++) {
+    for (size_t i = 0; i < 8; i++) {
         if (arr[i] < tmp && arr[i] != 0) {
             tmp = arr[i];
             index = i;
@@ -31,22 +34,24 @@ byte min_arr(byte *arr, int index){
 }
 
 void ultrasonic() {
+    int pozice;
+    int min = min_arr(readData1,pozice);
+
     while (true) {
         if (Serial1.available() > 0) { 
-            Serial1.readBytes(readData, 10); //It require two things, variable name to read into, number of bytes to read.
+            Serial1.readBytes(readData1, 10); //It require two things, variable name to read into, number of bytes to read.
             printf("bytes: "); 
             // Serial.println(x); //display number of character received in readData variable.
-            printf("h: %i, ", readData[0]);
-            printf("h: %i, ", readData[1]);
+            printf("h: %i, ", readData1[0]);
+            printf("h: %i, ", readData1[1]);
             for(int i = 2; i<10; i++) {
-                printf("%i: %i, ", i-2, readData[i]); // ****************
+                printf("%i: %i, ", i-2, readData1[i]); // ****************
             }
             printf("\n ");
         } 
         delay(10);            
     }
 }
-
 
 void stopTime() { // STOP jizde po x milisec 
     while(true) {
@@ -72,8 +77,6 @@ void stopTime() { // STOP jizde po x milisec
         delay(10); 
     }
 }
-
-void forward(float, int);
 
 void setup() {
     
@@ -102,7 +105,7 @@ void setup() {
 
     startTime = millis();   
 
-    // std::thread t2(ultrasonic);
+    std::thread t2(ultrasonic);
     std::thread t3(stopTime); // vlakno pro zastaveni po uplynuti casu 
 
     fmt::print("{}'s Robotka '{}' with {} mV started!\n", cfg.owner, cfg.name, rkBatteryVoltageMv());
