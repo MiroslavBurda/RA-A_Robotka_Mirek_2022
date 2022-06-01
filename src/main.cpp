@@ -6,10 +6,14 @@
 
 unsigned long startTime = 0; // zacatek programu 
 bool red = true;
-const byte readSize = 10;
-byte readData1[readSize]= {0}; //The character array is used as buffer to read into.
+const byte readSize = 8;
+const byte header = 250; //hlavicka zpravy ma tvar: {250, 250+k}, k = 1 ... 3    
+constexpr byte msgHeader[3] = {251, 252, 253};
+const byte minVzdal = 40; // minimalni vzdalenost, na ktere se sousedni robot muze priblizit, if se priblizi vic, tak abort();
+
+byte readData0[readSize]= {0}; //The character array is used as buffer to read into.
+byte readData1[readSize]= {0};
 byte readData2[readSize]= {0};
-byte readData3[readSize]= {0};
 byte state = 1; // stav programu
 byte speed = 50; // obvykla rychlost robota
 byte speedSlow = 20; // pomala = zataceci rychlost robota  
@@ -34,22 +38,42 @@ byte min_arr(byte *arr, int &index){
 }
 
 void ultrasonic() {
-    int pozice;
-    int min = min_arr(readData1,pozice);
-
+    int pozice0, pozice1, pozice2;
+    // int min = min_arr(readData1,pozice);
     while (true) {
         if (Serial1.available() > 0) { 
-            Serial1.readBytes(readData1, 10); //It require two things, variable name to read into, number of bytes to read.
-            printf("bytes: "); 
-            // Serial.println(x); //display number of character received in readData variable.
-            printf("h: %i, ", readData1[0]);
-            printf("h: %i, ", readData1[1]);
-            for(int i = 2; i<10; i++) {
-                printf("%i: %i, ", i-2, readData1[i]); // ****************
+            int temp = Serial1.read();
+            if(temp == header) {
+                // printf("bytes: %i \n", header); 
+                if (Serial1.available() > 0) {
+                    int head = Serial1.read();
+                    printf("head: %i ", head); 
+                    switch (head) {
+                    case msgHeader[0]: 
+                        Serial1.readBytes(readData0, readSize); //It require two things, variable name to read into, number of bytes to read.
+                        for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData0[i]); } printf("\n ");
+                        break;        
+                    case msgHeader[1]:
+                        Serial1.readBytes(readData1, readSize); 
+                        for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData1[i]); } printf("\n ");
+                        break;        
+                    case msgHeader[2]:
+                        Serial1.readBytes(readData2, readSize); 
+                        for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData2[i]); } printf("\n ");
+                        break;
+                    default:
+                        printf("Nenasel druhy byte hlavicky !! "); 
+                    }
+                }
+                int min0 = min_arr(readData0, pozice0); 
+                int min1 = min_arr(readData1, pozice0); 
+                if ( (min0 == min1) && (min0 < minVzdal) ) {
+                    printf("Souper se prilis priblizil...");
+                    abort();
+                }
             }
-            printf("\n ");
         } 
-        delay(10);            
+        delay(50);            
     }
 }
 
@@ -63,11 +87,11 @@ void stopTime() { // STOP jizde po x milisec
             delay(100); // aby stihla LED z predchoziho radku rozsvitit - z experimentu
             //rkSmartLedsRGB(0, 255, 0, 0)
             for(int i = 0; i<5; i++)  { // zaverecne zablikani vsemi LED 
-                for(int i = 0; i<5; i++) {
+                for(int i = 1; i<5; i++) {
                     rkLedById(i, true);
                 }
                 delay(500);
-                for(int i = 0; i<5; i++) {
+                for(int i = 1; i<5; i++) {
                     rkLedById(i, false);
                 }
                 delay(500);
