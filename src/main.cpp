@@ -9,13 +9,14 @@ bool red = true;
 const byte readSize = 8;
 const byte header = 250; //hlavicka zpravy ma tvar: {250, 250+k}, k = 1 ... 3    
 constexpr byte msgHeader[3] = {251, 252, 253};
-const byte minVzdal = 40; // minimalni vzdalenost, na ktere se sousedni robot muze priblizit, if se priblizi vic, tak abort();
+const byte minVzdal = 50; // minimalni vzdalenost, na ktere se sousedni robot muze priblizit, if se priblizi vic, tak abort();
 
 byte readData0[readSize]= {0}; //The character array is used as buffer to read into.
 byte readData1[readSize]= {0};
 byte readData2[readSize]= {0};
 byte state = 1; // stav programu
-byte speed = 50; // obvykla rychlost robota
+bool startState = false; // if je odstartovano vytazenim lanka 
+byte speed = 35; // obvykla rychlost robota
 byte speedSlow = 20; // pomala = zataceci rychlost robota  
 
 /**
@@ -39,40 +40,43 @@ byte min_arr(byte *arr, int &index){
 
 void ultrasonic() {
     int pozice0, pozice1, pozice2;
-    // int min = min_arr(readData1,pozice);
     while (true) {
-        if (Serial1.available() > 0) { 
-            int temp = Serial1.read();
-            if(temp == header) {
-                // printf("bytes: %i \n", header); 
-                if (Serial1.available() > 0) {
-                    int head = Serial1.read();
-                    printf("head: %i ", head); 
-                    switch (head) {
-                    case msgHeader[0]: 
-                        Serial1.readBytes(readData0, readSize); //It require two things, variable name to read into, number of bytes to read.
-                        for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData0[i]); } printf("\n ");
-                        break;        
-                    case msgHeader[1]:
-                        Serial1.readBytes(readData1, readSize); 
-                        for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData1[i]); } printf("\n ");
-                        break;        
-                    case msgHeader[2]:
-                        Serial1.readBytes(readData2, readSize); 
-                        for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData2[i]); } printf("\n ");
-                        break;
-                    default:
-                        printf("Nenasel druhy byte hlavicky !! "); 
+            if (Serial1.available() > 0) { 
+                int temp = Serial1.read();
+                if(temp == header) {
+                    // printf("bytes: %i \n", header); 
+                    if (Serial1.available() > 0) {
+                        int head = Serial1.read();
+                        printf("head: %i ", head); 
+                        switch (head) {
+                        case msgHeader[0]: 
+                            Serial1.readBytes(readData0, readSize); //It require two things, variable name to read into, number of bytes to read.
+                            for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData0[i]); } printf("\n ");
+                            break;        
+                        case msgHeader[1]:
+                            Serial1.readBytes(readData1, readSize); 
+                            for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData1[i]); } printf("\n ");
+                            break;        
+                        case msgHeader[2]:
+                            Serial1.readBytes(readData2, readSize); 
+                            for(int i = 0; i<8; i++) { printf("%i: %i, ", i, readData2[i]); } printf("\n ");
+                            break;
+                        default:
+                            printf("Nenasel druhy byte hlavicky !! "); 
+                        }
+                    }
+                    int min0 = min_arr(readData0, pozice0); 
+                    int min1 = min_arr(readData1, pozice0); 
+                    if ( (min0 == min1) && (min0 < minVzdal) ) {
+                        printf("Souper blizi...");
+                        if(startState) {
+                            printf("Souper se prilis priblizil...");
+                            abort();
+                        }
                     }
                 }
-                int min0 = min_arr(readData0, pozice0); 
-                int min1 = min_arr(readData1, pozice0); 
-                if ( (min0 == min1) && (min0 < minVzdal) ) {
-                    printf("Souper se prilis priblizil...");
-                    abort();
-                }
-            }
-        } 
+             
+        }
         delay(50);            
     }
 }
@@ -146,6 +150,8 @@ void setup() {
     printf("vyber strany - tlacitko Down\n");
     while(true) {   
         if(!rkButtonLeft(false)) { // vytazeni startovaciho lanka na tl. Left rozjede robota  
+            startState = true;
+            printf("Rozjizdim se\n");
             break;
         }
         if(rkButtonDown(true)) {
