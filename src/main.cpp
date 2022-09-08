@@ -5,7 +5,7 @@
 // tlačítko Up spouští přípravu, tlačítko Down vybírá strany; startovací lanko rozjíždí 
 
 unsigned long startTime = 0; // zacatek programu 
-bool red = true;
+bool red = true; // na ktere strane robot hraje 
 const byte readSize = 8;
 const byte header = 250; //hlavicka zpravy ma tvar: {250, 250+k}, k = 1 ... 3    
 constexpr byte msgHeader[3] = {251, 252, 253};
@@ -133,7 +133,7 @@ void setup() {
 
     startTime = millis();   
 
-    std::thread t2(ultrasonic);
+    //std::thread t2(ultrasonic);
     std::thread t3(stopTime); // vlakno pro zastaveni po uplynuti casu 
 
     fmt::print("{}'s Robotka '{}' with {} mV started!\n", cfg.owner, cfg.name, rkBatteryVoltageMv());
@@ -172,21 +172,21 @@ void setup() {
    while(true){  // hlavni smycka 
         if(state == 1) {
             state = 2;
-            rkMotorsDriveAsync(350, 350, speed, [&](){printf("ze startu\n"); state = 3;});
+            rkMotorsDriveAsync(500, 500, speed, [&](){printf("ze startu\n"); state = 3;});
         }
         if(state == 3) {
             state = 4;
             if (red){
-                rkMotorsDriveAsync(130, -130, speedSlow, [&](){printf("zatocil k nakladaku\n"); state = 5;});
+                rkMotorsDriveAsync(150, -150, speedSlow, [&](){printf("zatocil k nakladaku\n"); state = 5;});
             }
             else {
-                rkMotorsDriveAsync(-130, 130, speedSlow, [&](){printf("zatocil k nakladaku\n"); state = 5;});
+                rkMotorsDriveAsync(-150, 150, speedSlow, [&](){printf("zatocil k nakladaku\n"); state = 5;});
                 delay(500);
             }
         }
         if(state == 5) {
             state = 6;
-            rkMotorsDriveAsync(1010, 1010, speed, [&](){printf("vytlacil\n"); state = 7;}); // ************ bez couvani - state 9 
+            rkMotorsDriveAsync(1110, 1110, speed, [&](){printf("vytlacil\n"); state = 7;}); // ************ bez couvani - state 9 
         }
 
         if(state == 7) { // ************ couvani - nebezpecne bez ultrazvuku 
@@ -207,7 +207,7 @@ void setup() {
 
         if(state == 11) {
             state = 12;
-            rkMotorsDriveAsync(1120, 1120, speed, [&](){printf("vraci se zpet\n"); state = 13;});
+            rkMotorsDriveAsync(1220, 1220, speed, [&](){printf("vraci se zpet\n"); state = 13;});
         }
 
         if(state == 13) { 
